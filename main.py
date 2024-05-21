@@ -1,25 +1,29 @@
 import os
-import openai
 import requests
+import openai
 
-# Set up API keys or endpoints using environment variables
-openai.api_key = os.getenv('OPENAI_API_KEY')
-ollama_endpoint = 'http://localhost:5000/convert'  # Assuming Ollama runs on localhost port 5000
+# Initialize the OpenAI client with the API key
+client = openai.OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+
+ollama_endpoint = 'http://localhost:11434/api/generate'  # Adjust this to your Ollama API endpoint
 
 def convert_text_to_command_with_openai(text):
     """
     Use OpenAI API to convert text to a terminal command.
     """
     try:
-        response = openai.Completion.create(
-            model="text-davinci-003",  # You can change the model as needed
-            prompt=f"Convert the following user instruction into a safe terminal command:\n\n'{text}'",
+        prompt_text = f"Directly output a UNIX command to {text}."
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",  # Updated to use chat completions endpoint
+            messages=[{"role": "user", "content": prompt_text}],
             max_tokens=50
         )
-        command = response.choices[0].text.strip()
+        print(f"Response object: {response}")
+        command = response.choices[0].message.content.strip()
         return command
     except Exception as e:
-        print("Failed to convert text to command using OpenAI:", e)
+        print(f"Error: {e}")
+        print(f"Failed to convert text to command using OpenAI: {e}")
         return None
 
 def convert_text_to_command_with_ollama(text):
@@ -27,16 +31,25 @@ def convert_text_to_command_with_ollama(text):
     Use local Ollama API to convert text to a terminal command.
     """
     try:
-        response = requests.post(ollama_endpoint, json={"text": text})
+        url = ollama_endpoint
+        headers = {'Content-Type': 'application/json'}
+        prompt_text = f"Directly output a UNIX command to {text}."
+        data = {
+            "model": "deepseek-coder",
+            "prompt": prompt_text,
+            "stream": False
+        }
+        response = requests.post(url, headers=headers, data=json.dumps(data))
+        print(response)
         if response.status_code == 200:
             command = response.json().get('command', '').strip()
             return command
         else:
-            print("Ollama API error:", response.text)
-            return None
+            print(f"Failed to connect to Ollama API: {response.status_code}, {response.text}")
+            raise Exception("Failed to connect to Ollama API")
     except Exception as e:
-        print("Failed to convert text to command using Ollama:", e)
-        return None
+        print(f"Failed to connect to Ollama API: {response.status_code}, {response.text}")
+        raise Exception("Failed to connect to Ollama API")
 
 def main():
     # Let the user choose the AI provider
