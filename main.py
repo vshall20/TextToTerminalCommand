@@ -1,8 +1,9 @@
+import os
 import openai
 import requests
 
-# Set up API keys or endpoints
-openai.api_key = 'your_openai_api_key_here'
+# Set up API keys or endpoints using environment variables
+openai.api_key = os.getenv('OPENAI_API_KEY')
 ollama_endpoint = 'http://localhost:5000/convert'  # Assuming Ollama runs on localhost port 5000
 
 def convert_text_to_command_with_openai(text):
