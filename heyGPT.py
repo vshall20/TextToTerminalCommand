@@ -4,6 +4,10 @@ import requests
 import openai
 import json
 import re
+import platform
+
+# Get the current operating system
+current_os = platform.system()
 
 # Initialize the OpenAI client
 openai.api_key = os.getenv('OPENAI_API_KEY')
@@ -20,7 +24,7 @@ def extract_command(response_text):
     #     return match.group(1).strip()
     # return "Command not found."
 def convert_text_to_command_with_openai(text):
-    prompt_text = f"Directly output a single command to run in terminal based on the Operating System mentioned to {text}.\n Do not give explanation, just output the command. If Operating System in not mentioned, assume it to be UNIX"
+    prompt_text = f"Directly output a single command to run in terminal for {current_os} to {text}.\n Do not give explanation, just output the command. If Operating System in not mentioned, assume it to be UNIX"
     client = openai.OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
@@ -37,7 +41,7 @@ def convert_text_to_command_with_ollama(text):
     try:
         url = ollama_endpoint
         headers = {'Content-Type': 'application/json'}
-        prompt_text = f"Provide a concise and single command based on the Operating System specified to {text}.\n Do not give explanation, just output the command"
+        prompt_text = f"Directly output a single command to run in terminal for {current_os} to {text}.\n Do not give explanation, just output the command. If Operating System in not mentioned, assume it to be UNIX"
         data = {
             "model": "deepseek-coder",
             "prompt": prompt_text,
